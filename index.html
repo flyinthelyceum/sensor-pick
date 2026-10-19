@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sensor Pick</title>
+<meta name="description" content="Computer Coding Studio, The Sensor Layer: pick a main sensor, a second and a reach.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0d; --panel:#131317; --line:#26262d; --line-2:#383842;
+  --ink:#ecebe6; --dim:#9a998f; --faint:#64635c;
+  --main:#e8b400; --second:#7fb7d9; --reach:#d97f9f;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{padding-bottom:220px}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{padding:40px 0 20px;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{font-weight:500;font-size:clamp(34px,7vw,64px);line-height:1;margin:14px 0 18px;letter-spacing:-.02em}
+h1 .blink{color:var(--main)}
+.lede{max-width:62ch;font-size:17px;line-height:1.55;color:#cfcec7;margin:0 0 12px}
+.why{font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--dim);max-width:72ch;margin:0}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:28px 0 8px}
+.rule{background:var(--bg);padding:14px 16px}
+.rule b{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.rule p{margin:8px 0 0;font-size:14px;line-height:1.45;color:#c3c2bb}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.d-main{background:var(--main)} .d-second{background:var(--second)} .d-reach{background:var(--reach)}
+section.tier{padding:34px 0 6px}
+.tier-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px}
+.tier-head h2{margin:0;font-weight:500;font-size:22px}
+.tier-head span{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{position:relative;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;color:var(--ink);font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:10px;transition:border-color .25s,transform .25s,background .25s;min-height:230px}
+.card:hover{border-color:var(--line-2)}
+.card:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.card[aria-pressed="true"]{background:#17171c}
+.card[data-slot="main"]{border-color:var(--main)} .card[data-slot="second"]{border-color:var(--second)} .card[data-slot="reach"]{border-color:var(--reach)}
+.card[disabled]{opacity:.38;cursor:not-allowed}
+.trace{height:44px;width:100%;display:block;border-bottom:1px dashed var(--line-2);padding-bottom:6px}
+.trace path,.trace circle,.trace line,.trace rect{stroke:var(--faint);fill:none;stroke-width:1.5;vector-effect:non-scaling-stroke}
+.card[data-slot="main"] .trace *{stroke:var(--main)} .card[data-slot="second"] .trace *{stroke:var(--second)} .card[data-slot="reach"] .trace *{stroke:var(--reach)}
+.name{font-weight:600;font-size:16px;line-height:1.25}
+.sig{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.sig code{color:var(--ink);background:#1e1e24;padding:1px 5px;border-radius:3px}
+.kn{font-size:13.5px;line-height:1.45;margin:0;color:#d4d3cc}
+.kn em{font-style:normal;color:var(--dim)}
+.watch{font-size:12.5px;line-height:1.4;color:var(--dim);margin:0}
+.meta{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.meta a{color:var(--dim);text-decoration:underline;text-underline-offset:3px}
+.badge{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:3px;color:#0b0b0d;display:none}
+.card[data-slot] .badge{display:block}
+.card[data-slot="main"] .badge{background:var(--main)} .card[data-slot="second"] .badge{background:var(--second)} .card[data-slot="reach"] .badge{background:var(--reach)}
+/* tray */
+.tray{position:fixed;left:0;right:0;bottom:0;background:rgba(11,11,13,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line-2);z-index:5}
+.tray .wrap{padding-top:12px;padding-bottom:14px;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:end}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{border:1px dashed var(--line-2);border-radius:5px;padding:8px 10px;min-height:56px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.slot .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:flex;gap:6px;align-items:center}
+.slot .val{font-size:13.5px;margin-top:4px;line-height:1.25;color:var(--faint)}
+.slot.filled{border-style:solid}
+.slot.filled .val{color:var(--ink)}
+.slot.next{border-color:var(--ink)}
+.slot[data-k="main"].filled{border-color:var(--main)} .slot[data-k="second"].filled{border-color:var(--second)} .slot[data-k="reach"].filled{border-color:var(--reach)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fields label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.fields input{width:100%;margin-top:4px;background:#16161b;border:1px solid var(--line-2);border-radius:4px;color:var(--ink);font:15px var(--sans);padding:8px 9px}
+.fields input:focus{outline:none;border-color:var(--ink)}
+.fields .full{grid-column:1/-1}
+.go{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.status{font-family:var(--mono);font-size:12px;color:var(--dim)}
+button.send{font:500 14px var(--mono);letter-spacing:.06em;background:var(--ink);color:#0b0b0d;border:0;border-radius:4px;padding:11px 16px;cursor:pointer}
+button.send[disabled]{background:#2a2a31;color:var(--faint);cursor:not-allowed}
+footer{padding:40px 0;color:var(--faint);font-family:var(--mono);font-size:12px;line-height:1.6;border-top:1px solid var(--line);margin-top:30px}
+@media (prefers-reduced-motion:no-preference){
+  .anim{animation:breathe 3.2s ease-in-out infinite}
+  .card[aria-pressed="true"] .anim{animation-duration:1.4s}
+  @keyframes breathe{0%,100%{opacity:.45}50%{opacity:1}}
+  .sweep{transform-origin:50% 100%;animation:sweep 3s ease-in-out infinite alternate}
+  @keyframes sweep{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+}
+@media (max-width:820px){
+  .rules{grid-template-columns:1fr}
+  .tray .wrap{grid-template-columns:1fr}
+  body{padding-bottom:360px}
+}
+@media (max-width:420px){
+  .fields{grid-template-columns:1fr}
+  .slot .val{font-size:12.5px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="kicker">Computer Coding Studio · The Sensor Layer · pairs for the final piece</div>
+    <h1>What should your machine <span class="blink">notice</span>?</h1>
+    <p class="lede">Pick three sensors: the one you want to build with, a second you'd be glad to work with, and a reach from Mr. Reasy's advanced bench. Pairs are set from these picks. Every sensor below prints a number. The meaning is yours.</p>
+    <p class="why">Submitting opens a GitHub Issue with your picks already filled in. That rehearses the Issues you'll leave in the silent rounds, and it gives us the GitHub username your team repo needs.</p>
+    <div class="rules">
+      <div class="rule"><b><span class="dot d-main"></span>Main</b><p>The sensor you most want to build the piece around. From the browser or the shelf.</p></div>
+      <div class="rule"><b><span class="dot d-second"></span>Second</b><p>A different one you'd be glad to work with. Also from the browser or the shelf.</p></div>
+      <div class="rule"><b><span class="dot d-reach"></span>Reach</b><p>From the advanced bench. Lent out only after a simple sensor already works in the browser.</p></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="tiers"></main>
+
+<footer class="wrap">
+  Sources: <a href="https://brophyprep.instructure.com/courses/4936/pages/sensor-layer-references">The Sensor Layer: References</a>, section "What each sensor actually knows" ·
+  <a href="https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench">the bench README</a>, "What's on the shelf" and "Advanced sensing".
+</footer>
+
+<div class="tray" role="region" aria-label="Your picks">
+  <div class="wrap">
+    <div class="slots" id="slots"></div>
+    <div class="fields">
+      <div><label for="nm">Name, as on Canvas</label><input id="nm" autocomplete="name" placeholder="First Last"></div>
+      <div><label for="gh">GitHub username</label><input id="gh" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="your-username"></div>
+      <div class="full"><label for="nt">What do you want it to notice about a person? One line.</label><input id="nt" maxlength="160" placeholder="who leans in, and how long they stay"></div>
+    </div>
+    <div class="go">
+      <span class="status" id="status">Tap a sensor to fill Main.</span>
+      <button class="send" id="send" disabled>Open my Issue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const REFS = 'https://brophyprep.instructure.com/courses/4936/pages/sensor-layer-references';
+const SHELF = 'https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench#whats-on-the-shelf';
+const ADV = 'https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench#advanced-sensing';
+const T = { // tiny signal traces, one per sensor
+  face:'<circle cx="50" cy="22" r="14"/><path class="anim" d="M42 26 Q50 32 58 26"/><path d="M43 17h4M53 17h4"/>',
+  motion:'<rect class="sweep" x="42" y="6" width="16" height="32" rx="3"/>',
+  mic:'<path class="anim" d="M0 22h20l4-10 4 20 4-16 4 12 4-8 4 4h56"/>',
+  sonar:'<path d="M50 40L20 6M50 40L80 6"/><path class="anim" d="M36 22 Q50 14 64 22"/><path d="M30 14 Q50 2 70 14"/>',
+  pir:'<path d="M0 34h30v-24h40v24h30"/><circle class="anim" cx="50" cy="22" r="3"/>',
+  light:'<circle cx="50" cy="22" r="7"/><path class="anim" d="M50 4v6M50 34v6M32 22h6M62 22h6M37 9l4 4M59 31l4 4M63 9l-4 4M41 31l-4 4"/>',
+  ir:'<path d="M20 22h24"/><path class="anim" d="M56 22h24"/><rect x="44" y="14" width="12" height="16"/>',
+  sound:'<path class="anim" d="M0 22h14l3-12 3 24 3-18 3 14 3-8 3 4 3-14 3 22 3-10 3 4h50"/>',
+  touch:'<circle cx="50" cy="22" r="12"/><circle class="anim" cx="50" cy="22" r="5"/>',
+  knock:'<path d="M0 34h44"/><path class="anim" d="M44 34l3-30 3 30"/><path d="M50 34h50"/>',
+  tilt:'<path class="sweep" d="M30 34h40"/><circle cx="50" cy="30" r="3"/>',
+  pads:'<rect x="14" y="8" width="12" height="12"/><rect x="32" y="8" width="12" height="12"/><rect class="anim" x="50" y="8" width="12" height="12"/><rect x="68" y="8" width="12" height="12"/><rect x="14" y="24" width="12" height="12"/><rect x="32" y="24" width="12" height="12"/><rect x="50" y="24" width="12" height="12"/><rect x="68" y="24" width="12" height="12"/>',
+  rfid:'<rect x="30" y="8" width="40" height="28" rx="3"/><path class="anim" d="M40 22h20M44 16h12M44 28h12"/>',
+  spectral:'<path d="M10 36v-8M20 36v-16M30 36v-24M40 36v-12M50 36v-28M60 36v-18M70 36v-10M80 36v-20M90 36v-6" class="anim"/>',
+  imu:'<path d="M50 40V6M20 30l60-16"/><circle class="anim" cx="50" cy="22" r="10"/>',
+  i2s:'<path class="anim" d="M0 22c6-14 10 14 16 0s10 14 16 0 10 14 16 0 10 14 16 0 10 14 16 0 10 14 16 0"/>',
+  radar:'<path d="M50 40L14 8M50 40L86 8M22 14 Q50 -4 78 14"/><circle class="anim" cx="40" cy="20" r="2.5"/><circle class="anim" cx="62" cy="26" r="2.5"/><circle cx="54" cy="14" r="2.5"/>'
+};
+const S = [
+ // browser
+ {id:'face',tier:'browser',name:'Laptop webcam, with Face Landmarker',sig:['brow','smile','here'],t:'face',
+  kn:'the geometry of your face in 478 points and 52 named expressions',no:'what you are actually feeling',
+  w:'Runs entirely in the browser. The starter is already built on it. A smile score is legal; a smile that claims to mean happy is the EU line.',diff:'start here',link:REFS},
+ {id:'motion',tier:'browser',name:'Phone motion sensors (DeviceMotion)',sig:['tilted','shaken'],t:'motion',
+  kn:'how the phone tilts and shakes',no:'who is holding it',
+  w:'Needs a tap to allow before it works on an iPhone at all, and the page has to be on https.',diff:'moderate',link:REFS},
+ {id:'mic',tier:'browser',name:'Microphone level',sig:['loud','quiet'],t:'mic',
+  kn:'how loud the room is',no:'what anyone said',
+  w:'The level only. Nothing about words, and nothing recorded.',diff:'moderate',link:REFS},
+ // shelf
+ {id:'hcsr04',tier:'shelf',name:'Ultrasonic distance (HC-SR04)',sig:['near','present'],t:'sonar',
+  kn:'one number, how far away the nearest thing is',no:'what that thing is',
+  w:'The worked example in bench.ino. A cone about 30° wide: flat on a desk it hears the desk. Soft clothing swallows the echo.',diff:'start here',link:SHELF},
+ {id:'pir',tier:'shelf',name:'PIR motion',sig:['moving'],t:'pir',
+  kn:'whether something moved',no:'what moved or where it went',
+  w:'On or off, and it holds itself on for a few seconds. Someone standing still disappears.',diff:'simple',link:SHELF},
+ {id:'photo',tier:'shelf',name:'Photoresistor',sig:['shade'],t:'light',
+  kn:'how much light falls on it',no:'what cast the shadow',
+  w:'Needs a 10k resistor beside it. The room\'s light changes through the day.',diff:'simple',link:SHELF},
+ {id:'tcrt',tier:'shelf',name:'Reflective IR (TCRT5000)',sig:['close'],t:'ir',
+  kn:'a hand within a few centimetres',no:'anything further away',
+  w:'Very short range. Good for a piece that waits to be approached closely.',diff:'simple',link:SHELF},
+ {id:'sound',tier:'shelf',name:'Sound sensor (KY-037/038)',sig:['loud'],t:'sound',
+  kn:'the sound level at its analog pin',no:'what the sound was',
+  w:'Read A0 for a level. The digital pin only says over or under its dial.',diff:'simple',link:SHELF},
+ {id:'touch',tier:'shelf',name:'Touch pad (TTP223)',sig:['touch'],t:'touch',
+  kn:'that skin touched a surface',no:'whose',
+  w:'Works through a few millimetres of paper or plastic, so it can hide inside the piece.',diff:'simple',link:SHELF},
+ {id:'piezo',tier:'shelf',name:'Piezo disc',sig:['knock'],t:'knock',
+  kn:'an instant of impact',no:'who knocked, or why',
+  w:'It spikes for an instant on a tap, so its state needs a hold.',diff:'simple',link:SHELF},
+ {id:'tilt',tier:'shelf',name:'Tilt switch',sig:['tilted'],t:'tilt',
+  kn:'that it has been tipped past an angle',no:'by whom',
+  w:'For a piece someone picks up.',diff:'simple',link:SHELF},
+ // advanced
+ {id:'mpr121',tier:'adv',name:'Capacitive touch, 12 pads (MPR121)',sig:['touched','which pad'],t:'pads',
+  kn:'which of twelve pads is being touched',no:'whose hand',
+  w:'Any conductive thing becomes a pad: foil, fruit, graphite. I2C on the Nano.',diff:'moderate',link:ADV},
+ {id:'rc522',tier:'adv',name:'RFID reader (RC522)',sig:['tagged','which card'],t:'rfid',
+  kn:'which card or tag is on it',no:'who carried it there',
+  w:'Each card has its own ID, so a piece can know which object is on it. 3.3 V power only.',diff:'moderate',link:ADV},
+ {id:'as7341',tier:'adv',name:'Spectral colour (AS7341 / AS7343)',sig:['colour','bright'],t:'spectral',
+  kn:'colour in eight to fourteen bands',no:'what the object is',
+  w:'Needs steady light on the object.',diff:'moderate',link:ADV},
+ {id:'bno085',tier:'adv',name:'Orientation IMU (BNO080/085)',sig:['tilted','turning','still'],t:'imu',
+  kn:'exactly how it is oriented and turning',no:'who is moving it',
+  w:'Too big for the Nano\'s memory: Nano 33 IoT or ESP32-S3.',diff:'hard',link:ADV},
+ {id:'inmp441',tier:'adv',name:'Digital microphone (INMP441)',sig:['loud'],t:'i2s',
+  kn:'the room\'s sound as a real digital signal',no:'what anyone said',
+  w:'I2S, which the Nano lacks: Nano 33 IoT or ESP32-S3.',diff:'hard',link:ADV},
+ {id:'ld2450',tier:'adv',name:'mmWave radar (HLK-LD2450)',sig:['near','present','count'],t:'radar',
+  kn:'where up to three people stand, through thin walls and in the dark',no:'who they are',
+  w:'The same family as the presence radar in homes since 2023. UART at 256000 baud, Nano 33 IoT.',diff:'hard',link:ADV}
+];
+const TIERS = [
+ {k:'browser',h:'In the browser',sub:'no wiring · main or second'},
+ {k:'shelf',h:'On the shelf',sub:'Arduino Nano, the north racks · main or second'},
+ {k:'adv',h:'The advanced bench',sub:'Mr. Reasy\'s bench, lent after a simple sensor works · reach only'}
+];
+const SLOTS = [{k:'main',l:'Main'},{k:'second',l:'Second'},{k:'reach',l:'Reach'}];
+const pick = {main:null,second:null,reach:null};
+const byId = Object.fromEntries(S.map(s=>[s.id,s]));
+const $ = s=>document.querySelector(s);
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){
+  $('#tiers').innerHTML = TIERS.map(t=>`
+   <section class="tier"><div class="tier-head"><h2>${t.h}</h2><span>${esc(t.sub)}</span></div>
+   <div class="grid">${S.filter(s=>s.tier===t.k).map(s=>`
+    <button class="card" id="c-${s.id}" data-id="${s.id}" aria-pressed="false">
+      <span class="badge"></span>
+      <svg class="trace" viewBox="0 0 100 44" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${T[s.t]}</svg>
+      <span class="name">${esc(s.name)}</span>
+      <span class="sig">signal: ${s.sig.map(x=>`<code>${esc(x)}</code>`).join(' ')}</span>
+      <p class="kn">Knows ${esc(s.kn)}. <em>Can't know ${esc(s.no)}.</em></p>
+      <p class="watch">${esc(s.w)}</p>
+      <span class="meta"><span>${esc(s.diff)}</span><a href="${s.link}" target="_blank" rel="noopener" data-stop>reference ↗</a></span>
+    </button>`).join('')}</div></section>`).join('');
+  document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',e=>{
+    if(e.target.closest('[data-stop]')) return;
+    toggle(c.dataset.id);
+  }));
+  paint();
+}
+function slotFor(id){return Object.keys(pick).find(k=>pick[k]===id)}
+function toggle(id){
+  const s=byId[id], cur=slotFor(id);
+  if(cur){pick[cur]=null;return paint()}
+  if(s.tier==='adv'){pick.reach=id}
+  else if(!pick.main){pick.main=id}
+  else if(!pick.second){pick.second=id}
+  else {pick.second=id}
+  paint();
+}
+function paint(){
+  S.forEach(s=>{
+    const c=$('#c-'+s.id), k=slotFor(s.id);
+    if(k){c.dataset.slot=k;c.setAttribute('aria-pressed','true');c.querySelector('.badge').textContent=k}
+    else{delete c.dataset.slot;c.setAttribute('aria-pressed','false')}
+  });
+  const next = !pick.main?'main':!pick.second?'second':!pick.reach?'reach':null;
+  $('#slots').innerHTML = SLOTS.map(o=>`<button class="slot ${pick[o.k]?'filled':''} ${next===o.k?'next':''}" data-k="${o.k}" title="${pick[o.k]?'Tap to clear':''}">
+     <span class="lab"><span class="dot d-${o.k}"></span>${o.l}</span>
+     <div class="val">${pick[o.k]?esc(byId[pick[o.k]].name):(o.k==='reach'?'from the advanced bench':'tap a sensor')}</div></button>`).join('');
+  document.querySelectorAll('.slot').forEach(b=>b.onclick=()=>{pick[b.dataset.k]=null;paint()});
+  check();
+}
+const GH = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
+function check(){
+  const nm=$('#nm').value.trim(), gh=$('#gh').value.trim().replace(/^@/,''), msg=[];
+  if(!pick.main) msg.push('pick a main');
+  else if(!pick.second) msg.push('pick a second');
+  else if(!pick.reach) msg.push('pick a reach from the advanced bench');
+  if(!nm) msg.push('your name');
+  if(!gh) msg.push('your GitHub username');
+  else if(!GH.test(gh)) msg.push('that GitHub username has a character GitHub doesn\'t allow');
+  const ok=!msg.length;
+  $('#send').disabled=!ok;
+  $('#status').textContent = ok ? 'Ready. GitHub opens with your Issue filled in: press Submit new issue there.' : 'Still need: '+msg.join(', ')+'.';
+  return ok;
+}
+['#nm','#gh','#nt'].forEach(s=>$(s).addEventListener('input',check));
+function q(v){return JSON.stringify(v)} // JSON strings are valid YAML scalars
+$('#send').onclick=()=>{
+  if(!check()) return;
+  const nm=$('#nm').value.trim(), gh=$('#gh').value.trim().replace(/^@/,''), nt=$('#nt').value.trim();
+  const body = [
+    'Picked at flyinthelyceum.github.io/sensor-pick. Submitting this Issue is your vote; you can edit it until pairs are set.',
+    '','```yaml',
+    'name: '+q(nm),'github: '+q(gh),
+    'main: '+q(pick.main),'second: '+q(pick.second),'reach: '+q(pick.reach),
+    'notice: '+q(nt),'```','',
+    'Main: '+byId[pick.main].name,'Second: '+byId[pick.second].name,'Reach: '+byId[pick.reach].name
+  ].join('\n');
+  const u = 'https://github.com/flyinthelyceum/sensor-pick/issues/new?'+new URLSearchParams({title:'pick: '+nm,body,labels:'pick'});
+  window.open(u,'_blank','noopener');
+};
+render();
+</script>
+</body>
+</html>
