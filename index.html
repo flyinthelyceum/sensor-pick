@@ -312,7 +312,6 @@ $('#send').onclick=()=>{
 };
 render();
 try{new IntersectionObserver(es=>{document.querySelector('#mini').style.visibility=es[0].isIntersecting?'hidden':'visible'}).observe(document.querySelector('#finish'))}catch(e){}
-window.__issueUrl=()=>{let u;const o=window.open;window.open=x=>{u=x};document.querySelector('#send').onclick();window.open=o;return u};
 </script>
 </body>
 </html>
