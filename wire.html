@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wire Any Sensor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0d;--panel:#131317;--line:#26262d;--ink:#ecebe6;--dim:#9a998f;--main:#e8b400}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:17px;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:32px 16px 64px}
+.k{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{font-weight:500;font-size:clamp(32px,6vw,56px);margin:10px 0 8px;line-height:1.1}
+h2{font-weight:500;font-size:clamp(22px,3.4vw,30px);margin:44px 0 10px;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-family:"IBM Plex Mono",monospace;color:var(--main);font-size:.9em}
+p{margin:8px 0}
+.lede{font-size:clamp(18px,2.4vw,21px);color:var(--ink);max-width:46em}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin:14px 0}
+.loop{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.loop div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.loop b{display:block;font-family:"IBM Plex Mono",monospace;color:var(--main);font-weight:500;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.where{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.where div{border-left:3px solid var(--main);padding:4px 0 4px 12px}
+.where b{display:block}
+.where span{color:var(--dim);font-size:15px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:500;background:var(--panel)}
+tr:last-child td{border-bottom:0}
+code,.pin{font-family:"IBM Plex Mono",monospace;font-size:.92em}
+.pin{color:var(--main);white-space:nowrap}
+td small{display:block;color:var(--dim);font-size:14px;margin-top:2px}
+pre{background:#08080a;border:1px solid var(--line);border-radius:6px;padding:14px;overflow:auto;font-family:"IBM Plex Mono",monospace;font-size:14px;line-height:1.5;margin:0}
+.code{position:relative;margin:12px 0}
+.copy{position:absolute;top:8px;right:8px;background:var(--main);color:#111;border:0;border-radius:4px;font:500 13px "IBM Plex Mono",monospace;padding:6px 10px;cursor:pointer}
+.cm{color:#8f8e86}
+ol.checks{padding-left:1.4em;margin:10px 0}
+ol.checks li{margin:8px 0}
+ol.checks b{color:var(--ink)}
+.warn{border-left:3px solid #e0533a;padding:6px 0 6px 12px;margin:12px 0}
+.outs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.outs div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.outs b{display:block;margin-bottom:4px}
+.outs .code{margin:8px 0 0}
+.outs pre{font-size:13px;padding:10px}
+.foot{color:var(--dim);margin-top:40px;font-size:15px}
+a{color:var(--main)}
+@media (max-width:700px){.loop,.where{grid-template-columns:1fr}
+.scroll{border:0;overflow:visible}table{min-width:0}thead{display:none}
+tbody tr{display:block;background:var(--panel);border:1px solid var(--line);border-radius:6px;margin:0 0 10px;padding:10px 12px}
+td{display:block;border:0;padding:3px 0}
+td:nth-child(1)::before{content:"Label: ";color:var(--dim);font-size:13px}
+td:nth-child(2)::before{content:"Nano pin: ";color:var(--dim);font-size:13px}}
+</style></head><body><div class="wrap">
+
+<div class="k">Computer Coding Studio · The Sensor Layer · Sensor Prototype</div>
+<h1>Wire any sensor</h1>
+<p class="lede">An Arduino Nano, one sensor that reads something real, and one thing that answers it. This page gets any sensor from the drawer to numbers on your screen without waiting for Mr.&nbsp;Reasy.</p>
+
+<div class="loop">
+  <div><b>Sense</b>The sensor turns something physical (distance, light, sound, a touch, a tilt) into a number.</div>
+  <div><b>Decide</b>Your code watches the number and picks the line where it starts to matter.</div>
+  <div><b>Respond</b>Something happens: a light, a sound, a motion, or something on screen.</div>
+</div>
+<p>That loop is the whole assignment. Your phone, a car and every game controller run it thousands of times a second.</p>
+
+<div class="box where">
+  <div><b>Canvas</b><span>What is due, when, and how it is graded.</span></div>
+  <div><b>This page</b><span>How to wire and read your sensor.</span></div>
+  <div><b>Your team repo</b><span>What your group built and who owns which part.</span></div>
+</div>
+
+<h2><span class="n">1</span>Read the labels on your sensor</h2>
+<p>Every sensor board has tiny labels next to its pins. Find yours in the left column. That tells you where each wire goes.</p>
+<div class="warn"><b>Unplug the USB cable before you move any wire.</b> Plug it back in when the wiring is done.</div>
+<div class="scroll"><table>
+<thead><tr><th>Label on the sensor</th><th>Goes to the Nano</th><th>What it is</th></tr></thead>
+<tbody>
+<tr><td><code>VCC</code> <code>+</code> <code>V</code> <code>5V</code></td><td><span class="pin">5V</span></td><td>Power. Every sensor needs it.<small>If the board says 3.3V only, use the <span class="pin">3V3</span> pin instead.</small></td></tr>
+<tr><td><code>GND</code> <code>G</code> <code>-</code></td><td><span class="pin">GND</span></td><td>Ground. Every sensor needs it too.</td></tr>
+<tr><td><code>AO</code> <code>A0</code> <code>SIG</code> <code>S</code></td><td><span class="pin">A0</span></td><td>An <b>analog</b> signal: a number from 0 to 1023 that rises and falls smoothly.<small>Light, sound level, pressure, a knob, soil moisture.</small></td></tr>
+<tr><td><code>DO</code> <code>D0</code> <code>OUT</code> <code>I/O</code></td><td><span class="pin">D2</span></td><td>A <b>digital</b> signal: only on or off.<small>Motion (PIR), touch pads, IR obstacle sensors. A small screw dial on the board sets when it flips.</small></td></tr>
+<tr><td><code>SDA</code> and <code>SCL</code></td><td><span class="pin">A4</span> and <span class="pin">A5</span></td><td>An <b>I2C</b> sensor: it sends its numbers as a message.<small>Needs a library: Tools, Manage Libraries, search the chip name printed on the board, then open its example under File, Examples.</small></td></tr>
+<tr><td><code>TRIG</code> and <code>ECHO</code></td><td><span class="pin">D9</span> and <span class="pin">D10</span></td><td>The ultrasonic distance sensor (HC-SR04).<small>Use <code>bench.ino</code> from the starter repo as it is. It already works.</small></td></tr>
+<tr><td>No board, just two legs<small>photoresistor, pressure pad, thermistor</small></td><td>one leg <span class="pin">5V</span>, other leg <span class="pin">A0</span><br>plus a <b>10k resistor</b> from <span class="pin">A0</span> to <span class="pin">GND</span></td><td>A part that changes resistance needs a partner resistor to make a number.</td></tr>
+<tr><td>A button or tilt switch</td><td>one side <span class="pin">D2</span>, other side <span class="pin">GND</span></td><td>Digital. Set <code>PULLUP = true</code> in the sketch below. It reads on when pressed.</td></tr>
+</tbody></table></div>
+<p style="color:var(--dim);font-size:15px;margin-top:10px">A board with both <code>AO</code> and <code>DO</code> (like the sound sensor): use <code>AO</code>. It gives you a level, not just loud or quiet.</p>
+
+<h2><span class="n">2</span>Upload the any-sensor sketch</h2>
+<p>Paste this into a new Arduino IDE sketch. Change the lines marked <b>CHANGE</b>, then upload (Tools, Board: Arduino Nano). Open Tools, Serial Monitor and set it to <b>115200</b>. You should see numbers scrolling. Wave a hand, cover it, make a noise: the number should move.</p>
+<div class="code"><button class="copy" data-for="sketch">Copy</button><pre id="sketch">// any-sensor.ino: reads one sensor, prints the number, answers with an LED.
+
+const bool ANALOG = true;    // CHANGE: true if your signal wire is on A0, false if it is on D2
+const bool PULLUP = false;   // CHANGE: true only for a bare button or tilt switch on D2
+const int  LINE = 500;       // CHANGE: after you watch the numbers, the value where it should react
+
+const int LED = 5;           // output: LED long leg to D5, short leg through a 220 ohm resistor to GND
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(2, PULLUP ? INPUT_PULLUP : INPUT);
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  int value;
+  if (ANALOG) {
+    value = analogRead(A0);                     // 0 to 1023
+  } else {
+    bool on = digitalRead(2);
+    if (PULLUP) on = !on;                       // a pressed button reads LOW, so flip it
+    value = on ? 1023 : 0;
+  }
+
+  bool over = value &gt; LINE;
+  digitalWrite(LED, over ? HIGH : LOW);       // the response
+
+  Serial.print("value ");                      // same format bench.html reads
+  Serial.print(value);
+  Serial.print(" over ");
+  Serial.println(over ? 1 : 0);
+
+  delay(50);                                   // about 20 readings a second
+}</pre></div>
+<p>When the numbers move, write down three of them: what it reads with nothing happening, with a little happening, and with a lot happening. Your <code>LINE</code> goes between the first two.</p>
+
+<h2><span class="n">3</span>Pick the response</h2>
+<p>The sketch lights an LED. Swap in any of these. The answer has to be something a visitor can see or hear without you explaining it.</p>
+<div class="outs">
+  <div><b>LED</b>Long leg to <span class="pin">D5</span>, short leg through a 220 ohm resistor to <span class="pin">GND</span>. Already in the sketch.</div>
+  <div><b>Buzzer</b>Plus to <span class="pin">D6</span>, minus to <span class="pin">GND</span>. In <code>loop()</code>, replace the <code>digitalWrite</code> line:
+    <div class="code"><pre>if (over) tone(6, 880, 100);</pre></div></div>
+  <div><b>Servo</b>Brown to <span class="pin">GND</span>, red to <span class="pin">5V</span>, orange to <span class="pin">D3</span>.
+    <div class="code"><pre>// top of the file:
+#include &lt;Servo.h&gt;
+Servo arm;
+// inside setup():
+arm.attach(3);
+// in loop():
+arm.write(map(value,0,1023,0,180));</pre></div></div>
+  <div><b>The screen or the browser</b>The 0.96 in screen, or <code>bench.html</code> in Chrome over USB: both are in the <a href="https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench">bench README</a>. Get the LED working first.</div>
+</div>
+
+<h2><span class="n">4</span>Stuck? Six checks before you raise a hand</h2>
+<ol class="checks">
+  <li><b>No port shows up in the IDE.</b> Try another USB cable. Some cables carry power but no data.</li>
+  <li><b>Upload fails with <code>not in sync</code>.</b> Tools, Processor, <b>ATmega328P (Old Bootloader)</b>. Unplug, plug back in, upload again.</li>
+  <li><b>The Serial Monitor shows garbage.</b> Set the speed in its corner to 115200.</li>
+  <li><b>The number is stuck at 0 or 1023.</b> The signal wire is on the wrong pin, or the sensor has no power. Check <span class="pin">5V</span> and <span class="pin">GND</span> first. A digital sensor stuck on or off: turn its little screw dial.</li>
+  <li><b>The number jumps around with nothing touching it.</b> The signal wire is not really connected. Push it fully into the right breadboard row.</li>
+  <li><b>Everything checks out and it still reads nothing.</b> Swap in a spare sensor of the same kind before you rewire anything. Parts do die.</li>
+</ol>
+
+<h2><span class="n">5</span>A sensor that is not on this page</h2>
+<p>Take a clear photo of the board, both sides, so the labels and the chip are readable. Give it to an AI with this:</p>
+<div class="code"><button class="copy" data-for="prompt">Copy</button><pre id="prompt">This is a sensor board I want to use with an Arduino Nano (5V).
+1. What sensor is it?
+2. Which pin is power, which is ground, and which is the signal?
+3. Is the signal analog, digital, or I2C?
+4. Which Nano pin does each wire go to?
+5. If it needs a library, which one, and which example sketch should I open?</pre></div>
+<p>Then check its answer against the table in step 1. If they disagree, the labels on the board win.</p>
+
+<p class="foot">The reference build, the browser connection and the advanced sensors are in the <a href="https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench">bench README</a>. The pairs are on the <a href="pairs.html">pairs page</a>.</p>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=document.getElementById(b.dataset.for).innerText;
+    navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)});
+  });
+});
+</script>
+</body></html>
