@@ -83,7 +83,7 @@ td:nth-child(2)::before{content:"Nano pin: ";color:var(--dim);font-size:13px}}
 <tr><td>No board, just two legs<small>photoresistor, pressure pad, thermistor</small></td><td>one leg <span class="pin">5V</span>, other leg <span class="pin">A0</span><br>plus a <b>10k resistor</b> from <span class="pin">A0</span> to <span class="pin">GND</span></td><td>A part that changes resistance needs a partner resistor to make a number.</td></tr>
 <tr><td>A button or tilt switch</td><td>one side <span class="pin">D2</span>, other side <span class="pin">GND</span></td><td>Digital. Set <code>PULLUP = true</code> in the sketch below. It reads on when pressed.</td></tr>
 </tbody></table></div>
-<p style="color:var(--dim);font-size:15px;margin-top:10px">A board with both <code>AO</code> and <code>DO</code> (like the sound sensor): use <code>AO</code>. It gives you a level, not just loud or quiet.</p>
+<p style="color:var(--dim);font-size:15px;margin-top:10px">A board with both <code>AO</code> and <code>DO</code> (like the sound sensor): use <code>AO</code>. It gives you a level: how loud, how bright, how close.</p>
 
 <h2><span class="n">2</span>Upload the any-sensor sketch</h2>
 <p>Paste this into a new Arduino IDE sketch. Change the lines marked <b>CHANGE</b>, then upload (Tools, Board: Arduino Nano). Open Tools, Serial Monitor and set it to <b>115200</b>. You should see numbers scrolling. Wave a hand, cover it, make a noise: the number should move.</p>
@@ -200,6 +200,180 @@ arm.write(map(value,0,1023,0,180));
 4. Which Nano pin does each wire go to?
 5. If it needs a library, which one, and which example sketch should I open?</pre></div>
 <p>Then check its answer against the table in step 1. If they disagree, the labels on the board win.</p>
+
+<h2><span class="n">6</span>Give it names</h2>
+<p>This step is for the piece, after your prototype runs. <b>Your State Table moves into the sketch</b>, so the Nano names people with the laptop unplugged. Each row is one name: the word, which side of its <code>LINE</code> it fires on, its <code>LINE</code> and <code>GAP</code>, and its hold in seconds.</p>
+<ol class="checks">
+  <li><b>Rows are checked top to bottom.</b> The first row that has stayed true for its whole hold wins, so a narrow name sits above a wide one: <code>intruder</code> (under 30 cm) above <code>hesitant</code> (under 80). <code>nobody</code> comes last.</li>
+  <li><b>A row must stay true for its hold</b>, timed with <code>millis()</code>, before the name changes. No row held long enough yet? The name stays as it was.</li>
+  <li><b>The <code>switch</code> gives each name its own response.</b> Add a <code>case</code> for every row, no two the same.</li>
+  <li><b>It prints numbers only</b>, like <code>value 512 name 2</code>, because <code>bench.html</code> skips words. <code>name 0</code> is the top row.</li>
+</ol>
+<p>A PIR names by time. Put <code>lingering</code> (over 512 for 5 s) above <code>passing</code> (over 512 for 0.5 s), and <code>gone</code> (under 512 for 10 s) last. Four seconds of motion is still <code>passing</code>.</p>
+<div class="code"><button class="copy" data-for="names">Copy</button><pre id="names">// names.ino: reads one sensor, calls the person a name, answers each name its own way.
+
+const bool ANALOG = true;    // CHANGE: true if your signal wire is on A0, false if it is on D2
+const bool PULLUP = false;   // CHANGE: true only for a bare button or tilt switch on D2
+
+struct Row { const char* name; bool over; float line; float gap; float hold; };
+
+// CHANGE: your State Table, one row per name. nobody comes last.
+// Checked top to bottom: the first row that has stayed true for its whole hold wins.
+Row rows[] = {
+  // name        over LINE?  LINE   GAP   hold (s)
+  { "covered",   false,      100,   20,   1.0 },   // name 0: under 100 for 1 s
+  { "shadowed",  false,      400,   20,   2.0 },   // name 1: under 400 for 2 s
+  { "nobody",    true,       400,   20,   3.0 },   // name 2: over 400 for 3 s
+};
+const int ROWS = sizeof(rows) / sizeof(rows[0]);
+
+const int LED = 5;           // LED long leg to D5, short leg through a 220 ohm resistor to GND
+const int BUZZ = 6;          // buzzer plus to D6, minus to GND
+
+bool on[ROWS];               // is each row true right now?
+unsigned long since[ROWS];   // when each row turned true
+int current = ROWS - 1;      // the name now. It starts as nobody.
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(2, PULLUP ? INPUT_PULLUP : INPUT);
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  int value;
+  if (ANALOG) {
+    value = analogRead(A0);                     // 0 to 1023
+  } else {
+    bool hit = digitalRead(2);
+    if (PULLUP) hit = !hit;                     // a pressed button reads LOW, so flip it
+    value = hit ? 1023 : 0;
+  }
+  unsigned long now = millis();
+
+  for (int i = 0; i &lt; ROWS; i++) {              // each row is the LINE and GAP from step 2
+    bool was = on[i];
+    float edge = rows[i].line;
+    float gap = rows[i].gap;
+    if (rows[i].over) {
+      if (value &gt; edge + gap) on[i] = true;
+      if (value &lt; edge - gap) on[i] = false;
+    } else {
+      if (value &lt; edge - gap) on[i] = true;
+      if (value &gt; edge + gap) on[i] = false;
+    }
+    if (on[i] &amp;&amp; !was) since[i] = now;          // it just turned true: start its clock
+  }
+
+  for (int i = 0; i &lt; ROWS; i++) {              // top to bottom
+    if (on[i] &amp;&amp; now - since[i] &gt;= rows[i].hold * 1000) {
+      current = i;                              // the first row held long enough wins
+      break;
+    }
+  }                                             // no row held yet? the name stays as it was
+
+  switch (current) {                            // CHANGE: one response per name, no two the same
+    case 0:                                     // covered: light on, buzzer sounds
+      digitalWrite(LED, HIGH);
+      tone(BUZZ, 440, 100);
+      break;
+    case 1:                                     // shadowed: light blinks, no sound
+      digitalWrite(LED, (now / 250) % 2);
+      break;
+    default:                                    // nobody: dark and quiet
+      digitalWrite(LED, LOW);
+  }
+
+  Serial.print("value ");                       // numbers only: bench.html skips words
+  Serial.print(value);
+  Serial.print(" name ");                       // name 0 is the top row
+  Serial.println(current);
+
+  delay(50);
+}</pre></div>
+<h3 style="margin-top:22px">Distance sensor (HC-SR04)? Use this one instead</h3>
+<div class="code"><button class="copy" data-for="names-distance">Copy</button><pre id="names-distance">// names-distance.ino: reads the HC-SR04, calls the person a name, answers each name its own way.
+
+const int TRIG = 9;          // sensor TRIG to D9
+const int ECHO = 10;         // sensor ECHO to D10
+
+struct Row { const char* name; bool over; float line; float gap; float hold; };
+
+// CHANGE: your State Table, one row per name, in cm. nobody comes last.
+// Checked top to bottom: the first row that has stayed true for its whole hold wins.
+Row rows[] = {
+  // name        over LINE?  LINE   GAP   hold (s)
+  { "intruder",  false,      30,    3,    1.0 },   // name 0: under 30 cm for 1 s
+  { "hesitant",  false,      80,    5,    4.0 },   // name 1: under 80 cm for 4 s
+  { "nobody",    true,       80,    5,    5.0 },   // name 2: over 80 cm for 5 s
+};
+const int ROWS = sizeof(rows) / sizeof(rows[0]);
+
+const int LED = 5;           // LED long leg to D5, short leg through a 220 ohm resistor to GND
+const int BUZZ = 6;          // buzzer plus to D6, minus to GND
+
+bool on[ROWS];               // is each row true right now?
+unsigned long since[ROWS];   // when each row turned true
+int current = ROWS - 1;      // the name now. It starts as nobody.
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);                     // a 10 microsecond ping
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  unsigned long us = pulseIn(ECHO, HIGH, 30000);
+  float cm = us ? us / 58.0 : 400.0;            // no echo back: call it far away
+  unsigned long now = millis();
+
+  for (int i = 0; i &lt; ROWS; i++) {              // each row is the LINE and GAP from step 2
+    bool was = on[i];
+    float edge = rows[i].line;
+    float gap = rows[i].gap;
+    if (rows[i].over) {
+      if (cm &gt; edge + gap) on[i] = true;
+      if (cm &lt; edge - gap) on[i] = false;
+    } else {
+      if (cm &lt; edge - gap) on[i] = true;
+      if (cm &gt; edge + gap) on[i] = false;
+    }
+    if (on[i] &amp;&amp; !was) since[i] = now;          // it just turned true: start its clock
+  }
+
+  for (int i = 0; i &lt; ROWS; i++) {              // top to bottom
+    if (on[i] &amp;&amp; now - since[i] &gt;= rows[i].hold * 1000) {
+      current = i;                              // the first row held long enough wins
+      break;
+    }
+  }                                             // no row held yet? the name stays as it was
+
+  switch (current) {                            // CHANGE: one response per name, no two the same
+    case 0:                                     // intruder: light on, buzzer sounds
+      digitalWrite(LED, HIGH);
+      tone(BUZZ, 440, 100);
+      break;
+    case 1:                                     // hesitant: light blinks, no sound
+      digitalWrite(LED, (now / 250) % 2);
+      break;
+    default:                                    // nobody: dark and quiet
+      digitalWrite(LED, LOW);
+  }
+
+  Serial.print("cm ");                          // numbers only: bench.html skips words
+  Serial.print(cm, 1);
+  Serial.print(" name ");                       // name 0 is the top row
+  Serial.println(current);
+
+  delay(50);
+}</pre></div>
+<p><b>Check it.</b> Open the Serial Monitor and stand at each name's edge: the <code>name</code> number changes only after that row's hold. Then close the Serial Monitor, unplug the laptop, and power the Nano from a power bank. It still names you.</p>
 
 <p class="foot">The reference build, the browser connection and the advanced sensors are in the <a href="https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench">bench README</a>. The pairs are on the <a href="pairs.html">pairs page</a>.</p>
 </div>
