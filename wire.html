@@ -79,7 +79,7 @@ td:nth-child(2)::before{content:"Nano pin: ";color:var(--dim);font-size:13px}}
 <tr><td><code>AO</code> <code>A0</code> <code>SIG</code> <code>S</code></td><td><span class="pin">A0</span></td><td>An <b>analog</b> signal: a number from 0 to 1023 that rises and falls smoothly.<small>Light, sound level, pressure, a knob, soil moisture.</small></td></tr>
 <tr><td><code>DO</code> <code>D0</code> <code>OUT</code> <code>I/O</code></td><td><span class="pin">D2</span></td><td>A <b>digital</b> signal: only on or off.<small>Motion (PIR), touch pads, IR obstacle sensors. A small screw dial on the board sets when it flips.</small></td></tr>
 <tr><td><code>SDA</code> and <code>SCL</code></td><td><span class="pin">A4</span> and <span class="pin">A5</span></td><td>An <b>I2C</b> sensor: it sends its numbers as a message.<small>Needs a library: Tools, Manage Libraries, search the chip name printed on the board, then open its example under File, Examples.</small></td></tr>
-<tr><td><code>TRIG</code> and <code>ECHO</code></td><td><span class="pin">D9</span> and <span class="pin">D10</span></td><td>The ultrasonic distance sensor (HC-SR04).<small>Use <code>bench.ino</code> from the starter repo as it is. It already works.</small></td></tr>
+<tr><td><code>TRIG</code> and <code>ECHO</code></td><td><span class="pin">D9</span> and <span class="pin">D10</span></td><td>The ultrasonic distance sensor (HC-SR04).<small>Use the distance sketch in step 2. It reads the sensor and lights the LED.</small></td></tr>
 <tr><td>No board, just two legs<small>photoresistor, pressure pad, thermistor</small></td><td>one leg <span class="pin">5V</span>, other leg <span class="pin">A0</span><br>plus a <b>10k resistor</b> from <span class="pin">A0</span> to <span class="pin">GND</span></td><td>A part that changes resistance needs a partner resistor to make a number.</td></tr>
 <tr><td>A button or tilt switch</td><td>one side <span class="pin">D2</span>, other side <span class="pin">GND</span></td><td>Digital. Set <code>PULLUP = true</code> in the sketch below. It reads on when pressed.</td></tr>
 </tbody></table></div>
@@ -92,8 +92,10 @@ td:nth-child(2)::before{content:"Nano pin: ";color:var(--dim);font-size:13px}}
 const bool ANALOG = true;    // CHANGE: true if your signal wire is on A0, false if it is on D2
 const bool PULLUP = false;   // CHANGE: true only for a bare button or tilt switch on D2
 const int  LINE = 500;       // CHANGE: after you watch the numbers, the value where it should react
+const int  GAP = 20;         // raise this if the LED flickers at the line
 
 const int LED = 5;           // output: LED long leg to D5, short leg through a 220 ohm resistor to GND
+bool over = false;           // remembers the last answer between readings
 
 void setup() {
   Serial.begin(115200);
@@ -111,7 +113,8 @@ void loop() {
     value = on ? 1023 : 0;
   }
 
-  bool over = value &gt; LINE;
+  if (value &gt; LINE + GAP) over = true;       // clearly over the line
+  if (value &lt; LINE - GAP) over = false;      // clearly back under it
   digitalWrite(LED, over ? HIGH : LOW);       // the response
 
   Serial.print("value ");                      // same format bench.html reads
@@ -121,14 +124,51 @@ void loop() {
 
   delay(50);                                   // about 20 readings a second
 }</pre></div>
-<p>When the numbers move, write down three of them: what it reads with nothing happening, with a little happening, and with a lot happening. Your <code>LINE</code> goes between the first two.</p>
+<p>When the numbers move, write down three of them: what it reads with nothing happening, with a little happening, and with a lot happening. Your <code>LINE</code> goes between the first two. To react when the reading goes <em>low</em> instead (a dark room), swap <code>HIGH</code> and <code>LOW</code> on the <code>digitalWrite</code> line.</p>
+<h3 style="margin-top:22px">Distance sensor (HC-SR04)? Use this one instead</h3>
+<p>The any-sensor sketch cannot read it. This one prints the distance in centimetres and lights the LED when something comes closer than <code>LINE</code>.</p>
+<div class="code"><button class="copy" data-for="distance">Copy</button><pre id="distance">// distance-led.ino: reads the HC-SR04, prints cm, lights an LED when something is close.
+
+const int TRIG = 9;          // sensor TRIG to D9
+const int ECHO = 10;         // sensor ECHO to D10
+const int LED = 5;           // LED long leg to D5, short leg through a 220 ohm resistor to GND
+const int LINE = 30;         // CHANGE: centimetres where it should react
+const int GAP = 5;           // raise this if the LED flickers at the line
+
+bool near = false;           // remembers the last answer between readings
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);                    // a 10 microsecond ping
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  unsigned long us = pulseIn(ECHO, HIGH, 30000);
+  float cm = us ? us / 58.0 : 400.0;           // no echo back: call it far away
+
+  if (cm &lt; LINE - GAP) near = true;            // clearly closer than the line
+  if (cm &gt; LINE + GAP) near = false;           // clearly back past it
+  digitalWrite(LED, near ? HIGH : LOW);       // the response
+
+  Serial.print("cm ");                         // same format bench.html reads
+  Serial.println(cm, 1);
+
+  delay(50);
+}</pre></div>
 
 <h2><span class="n">3</span>Pick the response</h2>
 <p>The sketch lights an LED. Swap in any of these. The answer has to be something a visitor can see or hear without you explaining it.</p>
 <div class="outs">
   <div><b>LED</b>Long leg to <span class="pin">D5</span>, short leg through a 220 ohm resistor to <span class="pin">GND</span>. Already in the sketch.</div>
   <div><b>Buzzer</b>Plus to <span class="pin">D6</span>, minus to <span class="pin">GND</span>. In <code>loop()</code>, replace the <code>digitalWrite</code> line:
-    <div class="code"><pre>if (over) tone(6, 880, 100);</pre></div></div>
+    <div class="code"><pre>if (over) tone(6, 880, 100);</pre></div>In the distance sketch the word is <code>near</code>.</div>
   <div><b>Servo</b>Brown to <span class="pin">GND</span>, red to <span class="pin">5V</span>, orange to <span class="pin">D3</span>.
     <div class="code"><pre>// top of the file:
 #include &lt;Servo.h&gt;
@@ -136,7 +176,8 @@ Servo arm;
 // inside setup():
 arm.attach(3);
 // in loop():
-arm.write(map(value,0,1023,0,180));</pre></div></div>
+arm.write(map(value,0,1023,0,180));
+// distance sketch: arm.write(map(cm,5,100,0,180));</pre></div></div>
   <div><b>The screen or the browser</b>The 0.96 in screen, or <code>bench.html</code> in Chrome over USB: both are in the <a href="https://github.com/flyinthelyceum/sensor-layer-starter/tree/main/bench">bench README</a>. Get the LED working first.</div>
 </div>
 
